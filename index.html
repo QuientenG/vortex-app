@@ -29,18 +29,21 @@
         .toast.system { border-left-color: var(--admin-red); background: rgba(40,0,0,0.95); border: 1px solid var(--admin-red); }
         .toast.message { border-left: none; background: linear-gradient(135deg, rgba(0, 242, 254, 0.15), rgba(20,20,20,0.95)); border: 1px solid rgba(0,242,254,0.3); }
         @keyframes slideDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        /* Auth */
         #auth-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle at top right, #1a0b2e 0%, var(--bg-base) 100%); z-index: 1000; display: flex; flex-direction: column; justify-content: center; padding: 30px; transition: opacity 0.5s; }
         .auth-logo { font-size: 3.5rem; font-weight: 900; letter-spacing: 5px; text-align: center; margin-bottom: 5px; background: linear-gradient(135deg, var(--c-brand), var(--c-brand-alt)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 4px 10px rgba(0,242,254,0.3)); }
         .auth-sub { text-align: center; color: var(--c-muted); margin-bottom: 40px; font-size: 0.95rem; font-weight: 500; }
         .auth-toggle { text-align: center; margin-top: 20px; color: var(--c-muted); font-size: 0.9rem; cursor: pointer; }
         .auth-toggle span { color: var(--c-brand); font-weight: 600; }
         
-        /* Feed & Scroll Settings */
+        /* Feed & Scroll */
         #screen-feed { overflow: hidden; }
         #feed-scroll-container { width: 100%; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth; }
         .video-post { width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; background: #000; display: flex; justify-content: center; align-items: center; }
         .video-player { width: 100%; height: 100%; object-fit: cover; }
         
+        /* Navigation */
         #bottom-nav { position: absolute; bottom: 0; left: 0; width: 100%; height: var(--nav-height); background: rgba(10,10,10,0.95); backdrop-filter: blur(10px); border-top: 1px solid var(--c-border); display: flex; justify-content: space-around; align-items: center; z-index: 100; }
         .nav-item { color: var(--c-muted); display: flex; flex-direction: column; align-items: center; justify-content: center; width: 20%; cursor: pointer; transition: 0.2s; font-size: 0.65rem; font-weight: 600; gap: 4px; }
         .nav-item i { font-size: 1.4rem; transition: 0.2s; }
@@ -57,6 +60,7 @@
         .action-btn i { font-size: 2rem; color: #fff; transition: 0.2s; }
         .action-btn span { font-size: 0.75rem; font-weight: 600; }
         .action-btn.liked i { color: var(--c-accent); animation: pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); filter: drop-shadow(0 0 10px rgba(255,8,68,0.5)); }
+        
         .profile-pic-wrapper { width: 50px; height: 50px; border-radius: 50%; border: 2px solid #fff; overflow: visible; position: relative; margin-bottom: 10px; cursor: pointer; box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
         .profile-pic-wrapper img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; background:#222;}
         .follow-badge { position: absolute; bottom: -8px; left: 50%; transform: translateX(-50%); width: 22px; height: 22px; background: var(--c-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: #fff; cursor: pointer; border: 2px solid #000; transition: 0.3s; z-index: 10; }
@@ -64,9 +68,29 @@
         .post-info { position: absolute; left: 15px; bottom: 20px; z-index: 30; width: calc(100% - 80px); text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
         .post-author { font-weight: 800; font-size: 1rem; margin-bottom: 5px; cursor: pointer; }
         .post-desc { font-size: 0.9rem; line-height: 1.3; margin-bottom: 8px; }
+        
         @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.3); } 100% { transform: scale(1); } }
+        
         .play-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 4rem; color: rgba(255,255,255,0.5); pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 40; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); }
         .video-post.paused .play-overlay { opacity: 1; }
+        
+        /* Discover & Vortex AI */
+        .discover-tabs { display: flex; background: rgba(255,255,255,0.05); padding: 5px; border-radius: 8px; margin: 5px 15px 15px 15px; }
+        .discover-tabs .tab-btn { flex: 1; padding: 8px 0; background: transparent; color: var(--c-muted); border: none; border-radius: 6px; font-weight: 600; font-family: var(--font-ui); cursor: pointer; transition: 0.3s; font-size: 0.85rem; }
+        .discover-tabs .tab-btn.active { background: var(--c-border); color: var(--c-text); box-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        
+        .ai-msg { display: flex; gap: 10px; max-width: 85%; }
+        .ai-msg.user { align-self: flex-end; flex-direction: row-reverse; }
+        .ai-msg.bot { align-self: flex-start; }
+        .ai-avatar { width: 35px; height: 35px; background: linear-gradient(135deg, var(--c-brand), var(--c-brand-alt)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #000; font-size: 14px; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0,242,254,0.3); }
+        .ai-msg.user .ai-avatar { background: var(--c-border); color: var(--c-text); box-shadow: none; }
+        .ai-bubble { background: #1a1a1a; padding: 12px 16px; border-radius: 18px; border-top-left-radius: 4px; font-size: 0.95rem; line-height: 1.4; color: var(--c-text); border: 1px solid var(--c-border); }
+        .ai-msg.user .ai-bubble { background: linear-gradient(135deg, var(--c-brand), var(--c-brand-alt)); color: #000; font-weight: 600; border: none; border-top-left-radius: 18px; border-top-right-radius: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .ai-input-area { display: flex; padding: 15px; background: var(--bg-surface); border-top: 1px solid var(--c-border); gap: 10px; padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        .ai-input-area input { flex-grow: 1; background: #1a1a1a; border: 1px solid #333; color: #fff; border-radius: 25px; outline: none; font-size: 0.95rem; padding: 14px 20px; transition: 0.3s; }
+        .ai-input-area input:focus { border-color: var(--c-brand); }
+        .ai-input-area button { background: linear-gradient(135deg, var(--c-brand), var(--c-brand-alt)); color: #000; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 10px rgba(0,242,254,0.3); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; }
+        .ai-input-area button:active { transform: scale(0.9); }
         
         #screen-camera { background: #000; display: flex; flex-direction: column; }
         #camera-view { flex: 1; width: 100%; background: #111; position: relative; overflow: hidden; }
@@ -105,9 +129,10 @@
         .chat-msg { font-size: 0.85rem; color: var(--c-muted); display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; font-weight: 500; }
         .btn-trash { color: var(--c-accent); padding: 10px; border-radius: 8px; background: rgba(255,8,68,0.1); transition: 0.2s; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .btn-trash:hover { background: var(--c-accent); color: #fff; }
-        .id-card { background: linear-gradient(135deg, rgba(79, 172, 254, 0.1), rgba(0, 242, 254, 0.05)); border: 1px solid rgba(0, 242, 254, 0.3); padding: 20px; border-radius: 16px; margin: 15px; text-align: center; box-shadow: inset 0 0 20px rgba(0,242,254,0.05); }
+        .id-card { background: linear-gradient(135deg, rgba(79, 172, 254, 0.1), rgba(0, 242, 254, 0.05)); border: 1px solid rgba(0, 242, 254, 0.3); padding: 20px; border-radius: 16px; margin: 15px; text-align: center; box-shadow: inset 0 0 20px rgba(0,242,254,0.05); display: flex; flex-direction: column; align-items: center; }
         .id-card h3 { font-size: 0.8rem; color: var(--c-brand); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
-        .id-card .code { font-family: monospace; font-size: 2.2rem; font-weight: 900; letter-spacing: 4px; margin-bottom: 15px; user-select: all; text-shadow: 0 2px 10px rgba(0,242,254,0.5); }
+        .id-card-content { display: flex; align-items: center; gap: 15px; margin-top: 10px; }
+        .id-card .code { font-family: monospace; font-size: 1.8rem; font-weight: 900; letter-spacing: 4px; user-select: all; text-shadow: 0 2px 10px rgba(0,242,254,0.5); margin: 0; }
         
         #chat-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-base); z-index: 200; display: none; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); }
         #chat-overlay.active { display: flex; transform: translateX(0); }
@@ -116,11 +141,6 @@
         .msg-bubble { position: relative; max-width: 75%; padding: 12px 18px; border-radius: 20px; font-size: 0.95rem; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .msg-bubble.sent { align-self: flex-end; background: linear-gradient(135deg, var(--c-brand), var(--c-brand-alt)); color: #000; border-bottom-right-radius: 4px; font-weight: 600; }
         .msg-bubble.received { align-self: flex-start; background: #2a2a2a; color: #fff; border-bottom-left-radius: 4px; }
-        .chat-input-bar { padding: 15px; border-top: 1px solid var(--c-border); display: flex; gap: 10px; align-items: center; background: var(--bg-base); padding-bottom: calc(15px + env(safe-area-inset-bottom)); position: relative; }
-        .chat-input-bar input { flex: 1; background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 14px 20px; border-radius: 25px; outline: none; font-size: 0.95rem; transition: 0.3s; }
-        .chat-input-bar input:focus { border-color: var(--c-brand); background: #222; }
-        .btn-send { background: linear-gradient(135deg, var(--c-brand), var(--c-brand-alt)); color: #000; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,242,254,0.3); transition: 0.2s; }
-        .btn-send:active { transform: scale(0.9); }
         
         #typing-indicator { position: absolute; bottom: 100%; left: 15px; padding-bottom: 5px; color: var(--c-brand); font-size: 0.75rem; font-weight: 600; font-style: italic; display: none; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
@@ -147,8 +167,9 @@
         .settings-item.danger i, .settings-item.danger { color: var(--c-accent); }
         .settings-item.admin { background: rgba(255, 51, 51, 0.1); border: 1px solid rgba(255,51,51,0.3); color: var(--admin-red); display: none; }
         
+        /* Post Viewer Modal (Now perfectly matches main feed vertical style) */
         #post-view-modal { z-index: 600; background: #000; overflow: hidden; }
-        #post-view-content { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; width: 100%; height: calc(100% - 60px); }
+        #post-view-content { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; width: 100%; height: 100%; }
         
         #comments-modal { z-index: 700; background: var(--bg-surface); border-top-left-radius: 20px; border-top-right-radius: 20px; height: 70%; top: auto; bottom: 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.8); }
         .comment-item { display: flex; gap: 15px; margin-bottom: 15px; position:relative; }
@@ -188,15 +209,37 @@
         <div id="feed-scroll-container"></div>
     </div>
     
-    <div id="screen-discover" class="screen">
-        <div class="top-header" style="border-bottom: 1px solid var(--c-border);">
+    <div id="screen-discover" class="screen" style="display: flex; flex-direction: column;">
+        <div class="top-header" style="border-bottom: none; padding-bottom: 0;">
             <input type="text" id="discover-search" class="vortex-input" placeholder="Search hashtags or posts..." onkeyup="VORTEX.ui.searchDiscover(this.value)" style="margin:0; padding:12px 15px; border-radius:12px; background:rgba(255,255,255,0.05); width:100%;">
         </div>
-        <div id="discover-results" style="padding: 20px;">
-            <h3 style="margin-bottom: 15px;">Trending Today</h3>
-            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
-                <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-weight:bold;">#</div>
-                <div><div style="font-weight:bold;">#VortexLaunch</div><div style="font-size:0.8rem;color:var(--c-muted);">2.4B views</div></div>
+        
+        <div class="discover-tabs">
+            <button id="tab-btn-explore" class="tab-btn active" onclick="VORTEX.ui.switchDiscoverTab('explore')">Explore</button>
+            <button id="tab-btn-ai" class="tab-btn" onclick="VORTEX.ui.switchDiscoverTab('ai')"><i class="fa-solid fa-wand-magic-sparkles" style="color:var(--c-brand);"></i> Vortex AI</button>
+        </div>
+        
+        <div id="discover-explore" class="discover-view" style="flex:1; overflow-y:auto; padding-bottom:60px;">
+            <div id="discover-results" style="padding: 10px 20px;">
+                <h3 style="margin-bottom: 15px;">Trending Today</h3>
+                <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+                    <div style="width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:center;font-weight:bold;">#</div>
+                    <div><div style="font-weight:bold;">#VortexLaunch</div><div style="font-size:0.8rem;color:var(--c-muted);">2.4B views</div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="discover-ai" class="discover-view" style="display: none; flex-direction: column; flex:1; position: relative;">
+            <div id="ai-chat-history" style="flex-grow: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 15px; padding-bottom: 100px;">
+                <div class="ai-msg bot">
+                    <div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>
+                    <div class="ai-bubble">Hello! I am VORTEX AI. I can help you navigate the app, explain how our peer-to-peer storage works, or answer questions about your data. How can I assist you today?</div>
+                </div>
+            </div>
+            
+            <div class="ai-input-area" style="position:absolute; bottom:0; left:0; width:100%; border-radius:0; margin:0;">
+                <input type="text" id="ai-prompt" placeholder="Ask Vortex AI..." onkeypress="if(event.key === 'Enter') VORTEX.ai.ask()">
+                <button onclick="VORTEX.ai.ask()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
@@ -221,9 +264,20 @@
     </div>
     
     <div id="screen-inbox" class="screen">
-        <div class="top-header">Inbox <i class="fas fa-user-plus" style="cursor:pointer; color:var(--c-brand);" onclick="document.getElementById('add-friend-panel').style.display='flex'"></i></div>
-        <div class="id-card"><h3>Your Username</h3><div class="code" id="my-vortex-id" style="font-size:1.8rem;">......</div><button class="vortex-btn outline" style="padding:10px; width:auto; font-size:0.8rem;" onclick="VORTEX.p2p.copyId()"><i class="fas fa-copy"></i> Copy Username</button></div>
-        <div class="add-friend-panel" id="add-friend-panel" style="display:none; padding: 0 15px; margin-bottom: 15px; flex-direction:column; gap:10px;"><input type="text" id="friend-id-input" class="vortex-input" style="margin:0;" placeholder="Enter Username..."><button class="vortex-btn" onclick="VORTEX.p2p.addFriend()">Connect</button></div>
+        <div class="top-header">Inbox <i class="fas fa-user-plus" style="cursor:pointer; color:var(--c-brand);" onclick="VORTEX.ui.toggleAddFriend()"></i></div>
+        
+        <div class="id-card">
+            <h3>Your Username</h3>
+            <div class="id-card-content">
+                <div class="code" id="my-vortex-id">......</div>
+                <button class="vortex-btn" style="width:40px; height:40px; padding:0; border-radius:50%; display:flex; align-items:center; justify-content:center;" onclick="VORTEX.p2p.copyId()"><i class="fas fa-copy"></i></button>
+            </div>
+        </div>
+        
+        <div class="add-friend-panel" id="add-friend-panel" style="display:none; padding: 0 15px; margin-bottom: 15px; flex-direction:column; gap:10px;">
+            <input type="text" id="friend-id-input" class="vortex-input" style="margin:0;" placeholder="Enter Username...">
+            <button class="vortex-btn" onclick="VORTEX.p2p.addFriend()">Add Friend</button>
+        </div>
         <div style="padding: 10px 15px; font-weight:800; font-size:0.7rem; color:var(--c-muted); letter-spacing:1px;">SAVED CONNECTIONS</div><div class="inbox-list" id="friends-list"></div>
     </div>
     
@@ -267,7 +321,7 @@
     </div>
 
     <div id="post-view-modal" class="modal-overlay">
-        <div class="top-header" style="position:absolute; top:0; left:0; width:100%; z-index:650; background:linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); border:none;"><i class="fas fa-chevron-left" style="cursor:pointer; font-size:1.2rem;" onclick="this.closest('.modal-overlay').classList.remove('active'); document.getElementById('post-view-content').innerHTML='';"></i><i class="fas fa-trash-alt" id="post-view-delete" style="color:var(--c-accent); cursor:pointer; display:none;"></i></div>
+        <div class="top-header" style="position:absolute; top:0; left:0; width:100%; z-index:650; background:linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); border:none;"><i class="fas fa-chevron-left" style="cursor:pointer; font-size:1.2rem;" onclick="this.closest('.modal-overlay').classList.remove('active'); document.getElementById('post-view-content').innerHTML='';"></i><i class="fas fa-trash-alt" id="post-view-delete" style="color:var(--c-accent); cursor:pointer; display:none; padding-right:15px;"></i></div>
         <div id="post-view-content"></div>
     </div>
 
@@ -278,6 +332,11 @@
             <i class="fas fa-ellipsis-v" style="visibility:hidden;"></i>
         </div>
         <div style="padding: 20px; display:flex; flex-direction:column; gap:20px;">
+            <div class="glass-panel" style="padding:20px; background:rgba(255,0,0,0.05); border-color:rgba(255,0,0,0.2);">
+                <h4 style="color:var(--admin-red); margin-bottom:10px;"><i class="fas fa-users"></i> App User Log</h4>
+                <button class="vortex-btn danger" style="padding:12px; font-size:0.8rem;" onclick="VORTEX.admin.viewUsers()">View Registered Users</button>
+                <div id="admin-user-list" style="margin-top:10px; font-size:0.85rem; color:#ccc; max-height:150px; overflow-y:auto;"></div>
+            </div>
             <div class="glass-panel" style="padding:20px; background:rgba(255,0,0,0.05); border-color:rgba(255,0,0,0.2);">
                 <h4 style="color:var(--admin-red); margin-bottom:10px;"><i class="fas fa-user-shield"></i> User Moderation</h4>
                 <input type="text" id="admin-ban-user" class="vortex-input" placeholder="Enter exact username...">
@@ -409,6 +468,20 @@
                 if (screenId === 'inbox') VORTEX.p2p.renderFriendsList();
                 if (screenId === 'camera' && VORTEX.media.startCamera) VORTEX.media.startCamera(); else if (VORTEX.media.stopCamera) VORTEX.media.stopCamera();
             },
+            switchDiscoverTab(tabId) {
+                document.getElementById('tab-btn-explore').classList.remove('active');
+                document.getElementById('tab-btn-ai').classList.remove('active');
+                document.getElementById('discover-explore').style.display = 'none';
+                document.getElementById('discover-ai').style.display = 'none';
+                
+                document.getElementById(`tab-btn-${tabId}`).classList.add('active');
+                document.getElementById(`discover-${tabId}`).style.display = 'flex';
+                
+                if(tabId === 'ai') {
+                    const history = document.getElementById('ai-chat-history');
+                    history.scrollTop = history.scrollHeight;
+                }
+            },
             searchDiscover(query) {
                 const container = document.getElementById('discover-results');
                 if (!query) {
@@ -426,6 +499,70 @@
                 html += `</div>`;
                 if (matched.length === 0) html += `<div style="color:var(--c-muted);">No posts found.</div>`;
                 container.innerHTML = html;
+            },
+            toggleAddFriend() {
+                const panel = document.getElementById('add-friend-panel');
+                panel.style.display = panel.style.display === 'flex' ? 'none' : 'flex';
+            }
+        },
+        ai: {
+            ask() {
+                const input = document.getElementById('ai-prompt');
+                const text = input.value.trim();
+                if (!text) return;
+                
+                this.addMessage(text, 'user');
+                input.value = '';
+                
+                const history = document.getElementById('ai-chat-history');
+                const typingId = 'typing-' + Date.now();
+                history.insertAdjacentHTML('beforeend', `
+                    <div class="ai-msg bot" id="${typingId}">
+                        <div class="ai-avatar"><i class="fa-solid fa-robot"></i></div>
+                        <div class="ai-bubble" style="font-style: italic; color: var(--c-muted);">Thinking...</div>
+                    </div>
+                `);
+                
+                setTimeout(() => history.scrollTop = history.scrollHeight + 100, 50);
+
+                setTimeout(() => {
+                    document.getElementById(typingId).remove();
+                    const response = this.generateResponse(text.toLowerCase());
+                    this.addMessage(response, 'bot');
+                }, 800 + Math.random() * 1000); 
+            },
+            addMessage(text, sender) {
+                const history = document.getElementById('ai-chat-history');
+                const icon = sender === 'user' ? '<i class="fa-solid fa-user"></i>' : '<i class="fa-solid fa-robot"></i>';
+                const html = `
+                    <div class="ai-msg ${sender}">
+                        <div class="ai-avatar">${icon}</div>
+                        <div class="ai-bubble">${text}</div>
+                    </div>
+                `;
+                history.insertAdjacentHTML('beforeend', html);
+                setTimeout(() => history.scrollTop = history.scrollHeight + 500, 50);
+            },
+            generateResponse(query) {
+                if (query.includes("storage") || query.includes("space") || query.includes("memory")) {
+                    return "VORTEX runs locally on your device! Depending on your browser, you have up to 80% of your device's free hard drive space available to store videos and photos locally. You can check your exact usage in the Profile Settings.";
+                }
+                if (query.includes("how") && query.includes("work")) {
+                    return "VORTEX is a completely decentralized, peer-to-peer social network. Your posts aren't saved on a central server. Instead, they are synced directly between active users using WebRTC securely over the network!";
+                }
+                if (query.includes("clear") || query.includes("delete") || query.includes("cache")) {
+                    return "If the app is running slow or you want to free up space, you can clear your local cache by going to Profile > Settings (the gear icon) > Data Usage. Your identity will be kept safe!";
+                }
+                if (query.includes("who made you") || query.includes("creator")) {
+                    return "I am VORTEX AI. I was built exclusively for this peer-to-peer network to assist users like you with navigating our features.";
+                }
+                if (query.includes("hello") || query.includes("hi ") || query === "hi") {
+                    return `Hello ${VORTEX.currentUser}! How are you enjoying VORTEX today? Let me know if you need help finding anything.`;
+                }
+                if (query.includes("friend") || query.includes("add") || query.includes("connect")) {
+                    return "To add a friend, go to your Inbox tab, tap the '+' icon at the top right, and type in their exact VORTEX Username. Once added, you can message and video call them securely!";
+                }
+                return "That's an excellent question! Because I am currently running in a secure, offline mode directly on your device, I can primarily answer questions regarding how to use the VORTEX app, managing your storage, adding friends, or clearing your cache.";
             }
         },
         settings: {
@@ -442,11 +579,26 @@
                 VORTEX.db.save();
                 VORTEX.ui.showToast(u.notifications ? "Notifications Enabled" : "Notifications Disabled", "success");
             },
-            dataUsage() {
+            async dataUsage() {
+                let storageInfo = "";
+                if (navigator.storage && navigator.storage.estimate) {
+                    try {
+                        const estimate = await navigator.storage.estimate();
+                        const availableMB = ((estimate.quota - estimate.usage) / 1024 / 1024).toFixed(2);
+                        const availableGB = (availableMB / 1024).toFixed(2);
+                        
+                        if (availableGB >= 1) {
+                            storageInfo = `\n\nYou have approx ${availableGB} GB of free space left for VORTEX.`;
+                        } else {
+                            storageInfo = `\n\nYou have approx ${availableMB} MB of free space left for VORTEX.`;
+                        }
+                    } catch(e) { console.log(e); }
+                }
+                
                 localforage.getItem('vortex_data').then(data => {
                     const size = data ? JSON.stringify(data).length : 0;
                     const mb = (size / 1024 / 1024).toFixed(2);
-                    if(confirm(`VORTEX is using approx ${mb} MB of device storage. Would you like to clear cached data?\n\n(This won't delete your account, but may reset unsynced posts)`)) {
+                    if(confirm(`VORTEX is using approx ${mb} MB of storage.${storageInfo}\n\nWould you like to clear cached data?\n(This won't delete your account, but may reset unsynced posts)`)) {
                         localforage.clear();
                         VORTEX.ui.showToast("Local Cache cleared. Refreshing...", "system");
                         setTimeout(() => window.location.reload(), 1500);
@@ -478,7 +630,6 @@
                 // HARDCODED OWNER AUTHENTICATION
                 if (user === 'Quienten G') {
                     if (pass !== '5925') return VORTEX.ui.showToast("Access Denied: Invalid Owner Credentials", "error");
-                    
                     if (!VORTEX.db.users[user]) {
                         VORTEX.db.users[user] = { name: 'Quienten G', handle: '@Owner', avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=QuientenG`, friends: [], followedList: [], pass: pass, isPrivate: false, notifications: true };
                         VORTEX.db.save();
@@ -559,14 +710,28 @@
                         <div class="action-btn" onclick="navigator.clipboard.writeText(window.location.href); VORTEX.ui.showToast('Profile Link Copied!', 'success');"><i class="fas fa-share"></i><span>Share</span></div>
                     </div><div class="post-info"><div class="post-author" onclick="VORTEX.profile.render('${post.author}')">${author.name}</div><div class="post-desc">${post.desc}</div></div>`;
                     
-                    if (post.type === 'video') {
-                        el.addEventListener('click', (e) => {
-                            if (e.target.closest('.side-actions') || e.target.closest('.post-info')) return;
-                            const vid = el.querySelector('video');
-                            if (vid.paused) { vid.play(); el.classList.remove('paused'); }
-                            else { vid.pause(); el.classList.add('paused'); }
-                        });
-                    }
+                    const mediaEl = el.querySelector('.video-player');
+                    
+                    mediaEl.addEventListener('dblclick', (e) => {
+                        const heartBtn = el.querySelector('.fa-heart').parentElement;
+                        if (!heartBtn.classList.contains('liked')) {
+                            VORTEX.feed.likePost(post.id, heartBtn);
+                            VORTEX.ui.showToast('Liked!', 'success');
+                        }
+                    });
+                    
+                    let clickTimeout = null;
+                    mediaEl.addEventListener('click', (e) => {
+                        if (e.target.closest('.side-actions') || e.target.closest('.post-info')) return;
+                        if (post.type === 'video') {
+                            clearTimeout(clickTimeout);
+                            clickTimeout = setTimeout(() => {
+                                const vid = el.querySelector('video');
+                                if (vid.paused) { vid.play(); el.classList.remove('paused'); }
+                                else { vid.pause(); el.classList.add('paused'); }
+                            }, 200); 
+                        }
+                    });
                     container.appendChild(el);
                 });
 
@@ -655,14 +820,13 @@
                 const transformCss = post.isMirrored ? 'transform: scaleX(-1);' : '';
                 const filterCss = `filter: ${post.filter || 'none'};`;
                 
-                // Uses object-fit: contain so horizontal videos stay fully visible and aren't stretched
+                // Reverted back to object-fit: cover to render perfectly full vertical
                 let mediaHTML = post.type === 'video' 
-                    ? `<video class="video-player" src="${post.url}" style="${filterCss} ${transformCss} object-fit:contain;" loop playsinline autoplay controls></video>` 
-                    : `<img class="video-player" src="${post.url}" style="${filterCss} ${transformCss} object-fit:contain;">`;
+                    ? `<video class="video-player" src="${post.url}" style="${filterCss} ${transformCss} width:100%; height:100%; object-fit:cover;" loop playsinline autoplay controls></video>` 
+                    : `<img class="video-player" src="${post.url}" style="${filterCss} ${transformCss} width:100%; height:100%; object-fit:cover;">`;
                 
                 const isLiked = post.likes && post.likes.includes(VORTEX.currentUser);
                 
-                // Renders EXACTLY like the main feed! 
                 content.innerHTML = `
                     <div class="video-post" style="width:100%; height:100%; background:#000;">
                         ${mediaHTML}
@@ -701,6 +865,14 @@
         media: {
             stream: null, mediaRecorder: null, recordedChunks: [], tempMediaUrl: null, tempMediaType: null, currentMode: 'photo', currentFilter: 'none', isMirrored: true,
             startCamera() {
+                if (this.stream && this.stream.active) {
+                    const vid = document.getElementById('live-video');
+                    vid.srcObject = this.stream;
+                    vid.play().catch(e=>{});
+                    this.isMirrored = true;
+                    return;
+                }
+                
                 const constraints = { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: true };
                 navigator.mediaDevices.getUserMedia(constraints)
                     .then(s => { 
@@ -713,7 +885,10 @@
                         navigator.mediaDevices.getUserMedia({ video: true }).then(s => { this.stream = s; document.getElementById('live-video').srcObject = s; this.isMirrored = false; });
                     });
             },
-            stopCamera() { if(this.stream) this.stream.getTracks().forEach(t => t.stop()); },
+            stopCamera() { 
+                const vid = document.getElementById('live-video');
+                if (vid) vid.pause();
+            },
             setMode(m) {
                 this.currentMode = m;
                 document.getElementById('mode-photo').classList.remove('active');
@@ -1056,6 +1231,21 @@
             }
         },
         admin: {
+            viewUsers() {
+                const list = document.getElementById('admin-user-list');
+                const users = Object.values(VORTEX.db.users);
+                if (users.length === 0) return list.innerHTML = 'No users found.';
+                let html = '<ul style="list-style:none; padding:0; margin:0;">';
+                users.forEach(u => {
+                    const postCount = VORTEX.db.posts.filter(p => p.author === u.name).length;
+                    html += `<li style="padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.1); display:flex; justify-content:space-between;">
+                        <span style="font-weight:600;">@${u.name}</span>
+                        <span style="color:var(--c-brand);">${postCount} Posts</span>
+                    </li>`;
+                });
+                html += '</ul>';
+                list.innerHTML = html;
+            },
             broadcast() {
                 const msg = document.getElementById('admin-broadcast-msg').value; if(!msg) return; let count = 0;
                 for (let peerId in VORTEX.p2p.activeConnections) { const conn = VORTEX.p2p.activeConnections[peerId]; if (conn && conn.open) { conn.send({type: 'system', text: msg}); count++; } }
@@ -1093,16 +1283,14 @@
         }
         VORTEX.auth.init();
         
-        // Listen for sending messages/comments via Enter Key
         document.getElementById('chat-msg-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') VORTEX.p2p.sendMessage(); });
         document.getElementById('comment-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') VORTEX.feed.postComment(); });
 
-        // PERFECT UP AND DOWN ARROW SCROLLING FOR THE FEED
         document.addEventListener('keydown', (e) => {
             const feedScreen = document.getElementById('screen-feed');
             if (feedScreen && feedScreen.classList.contains('active')) {
                 if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-                    e.preventDefault(); // Prevents you from getting stuck halfway!
+                    e.preventDefault(); 
                     const container = document.getElementById('feed-scroll-container');
                     const posts = Array.from(container.children);
                     if (!posts.length) return;
