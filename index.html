@@ -1200,18 +1200,32 @@
                 document.getElementById('edit-profile-modal').classList.remove('active');
                 VORTEX.ui.showToast('Profile Updated', 'success');
             }
-        },
-        p2p: {
-            peer: null, activeConnections: {}, currentChat: null, currentCall: null, typingTimeout: null,
+Got it! I see `VortexV15.html.txt`. I've taken the FaceTime mobile browser bypasses and the PeerJS reconnection logic and injected them directly into the `p2p` module for this specific version.
+
+Since your V15 file is quite large with all the feed, profile, and admin terminal logic, the safest and cleanest way to apply this is to replace just the **`p2p`** section of your JavaScript.
+
+### Instructions:
+Open `VortexV15.html`, scroll down into the `<script>` section at the bottom, and replace your entire `p2p: { ... },` block (right above `admin: {`) with this upgraded version:
+
+```javascript
+        }, // <-- Make sure this comma is here!
+    p2p: {
+        peer: null, activeConnections: {}, currentChat: null, currentCall: null, typingTimeout: null,
             init() {
+                // Initialize PeerJS
                 this.peer = new Peer(VORTEX.currentUser, { debug: 2 });
                 this.peer.on('open', id => { document.getElementById('my-vortex-id').innerText = id; });
+                
+                // When someone connects to YOU
                 this.peer.on('connection', conn => {
                     this.activeConnections[conn.peer] = conn;
                     conn.on('open', () => this.updateChatHeaderStatus());
                     conn.on('data', data => this.handleData(conn.peer, data));
-                    conn.on('close', () => this.updateChatHeaderStatus());
+                    conn.on('close', () => { delete this.activeConnections[conn.peer]; this.updateChatHeaderStatus(); });
+                    conn.on('error', () => { delete this.activeConnections[conn.peer]; this.updateChatHeaderStatus(); });
                 });
+                
+                // When someone calls YOU (FaceTime)
                 this.peer.on('call', call => { this.handleCall(call); });
             },
             copyId() { navigator.clipboard.writeText(VORTEX.currentUser); VORTEX.ui.showToast('Username copied!', 'success'); },
@@ -1240,21 +1254,27 @@
                 VORTEX.db.save(); this.renderFriendsList();
             },
             connectToPeer(id) {
-                if (this.activeConnections[id] && this.activeConnections[id].open) return Promise.resolve();
+                // If connection already exists and is open, use it
+                if (this.activeConnections[id] && this.activeConnections[id].open) return Promise.resolve(this.activeConnections[id]);
+                
                 return new Promise((resolve) => {
-                    const conn = this.peer.connect(id);
+                    const conn = this.peer.connect(id, { reliable: true });
                     conn.on('open', () => { 
                         this.activeConnections[id] = conn; 
                         conn.on('data', data => this.handleData(id, data)); 
-                        conn.on('close', () => this.updateChatHeaderStatus());
+                        conn.on('close', () => { delete this.activeConnections[id]; this.updateChatHeaderStatus(); });
                         this.renderFriendsList(); 
                         this.updateChatHeaderStatus();
-                        resolve(); 
+                        resolve(conn); 
                     });
                     conn.on('error', () => {
+                        delete this.activeConnections[id];
                         this.updateChatHeaderStatus();
-                        resolve();
+                        resolve(null);
                     });
+                    
+                    // Fallback timeout in case the peer is completely offline
+                    setTimeout(() => resolve(null), 3000); 
                 });
             },
             updateChatHeaderStatus() {
@@ -1324,31 +1344,49 @@
                 const input = document.getElementById('chat-msg-input');
                 const text = input.value.trim();
                 if (!text || !this.currentChat) return;
-                const conn = this.activeConnections[this.currentChat];
-                if (conn && conn.open) {
-                    conn.send({ type: 'msg', text: text });
-                    document.getElementById('chat-history').innerHTML += `<div class="msg-wrapper"><div class="msg-bubble sent">${text}</div></div>`;
-                    document.getElementById('chat-history').scrollTop = document.getElementById('chat-history').scrollHeight;
-                    input.value = '';
-                } else {
-                    this.connectToPeer(this.currentChat).then(() => {
-                        if (this.activeConnections[this.currentChat] && this.activeConnections[this.currentChat].open) { this.sendMessage(); } else { VORTEX.ui.showToast('User is currently offline.', 'error'); }
-                    });
-                }
+                
+                // Attempt to send via an active connection or establish a new one
+                this.connectToPeer(this.currentChat).then(conn => {
+                    if (conn && conn.open) {
+                        conn.send({ type: 'msg', text: text });
+                        document.getElementById('chat-history').innerHTML += `<div class="msg-wrapper"><div class="msg-bubble sent">${text}</div></div>`;
+                        document.getElementById('chat-history').scrollTop = document.getElementById('chat-history').scrollHeight;
+                        input.value = '';
+                    } else {
+                        VORTEX.ui.showToast('User is currently offline. Cannot send message.', 'error');
+                    }
+                });
             },
+            
+            // --- UPGRADED FACETIME / VIDEO CALLING LOGIC ---
             callUser() {
                 if (!this.currentChat) return;
+                
+                // Request video and audio
                 navigator.mediaDevices.getUserMedia({video: { facingMode: 'user' }, audio: true}).then(stream => {
                     document.getElementById('call-overlay').style.display = 'flex';
-                    document.getElementById('call-local-video').srcObject = stream;
+                    
+                    // Attach local stream AND FORCE PLAY for strict mobile browsers
+                    const localVid = document.getElementById('call-local-video');
+                    localVid.srcObject = stream;
+                    localVid.play().catch(e => console.log("Local video play error:", e));
+
                     document.getElementById('call-status').innerText = 'Calling...';
+                    
+                    // Initiate the call
                     const call = this.peer.call(this.currentChat, stream);
                     this.currentCall = call;
+                    
+                    // When the other person answers
                     call.on('stream', remoteStream => {
                         document.getElementById('call-status').style.display = 'none';
-                        document.getElementById('call-remote-video').srcObject = remoteStream;
+                        const remoteVid = document.getElementById('call-remote-video');
+                        remoteVid.srcObject = remoteStream;
+                        remoteVid.play().catch(e => console.log("Remote video play error:", e));
                     });
+                    
                     call.on('close', () => this.endCall(true));
+                    
                 }).catch(e => VORTEX.ui.showToast('Camera/Mic access denied', 'error'));
             },
             handleCall(call) {
@@ -1360,22 +1398,48 @@
             },
             answerCall() {
                 document.getElementById('incoming-call').style.display = 'none';
+                
+                // Request video and audio to send back
                 navigator.mediaDevices.getUserMedia({video: { facingMode: 'user' }, audio: true}).then(stream => {
                     document.getElementById('call-overlay').style.display = 'flex';
-                    document.getElementById('call-local-video').srcObject = stream;
+                    
+                    // Attach local stream AND FORCE PLAY
+                    const localVid = document.getElementById('call-local-video');
+                    localVid.srcObject = stream;
+                    localVid.play().catch(e => console.log("Local video play error:", e));
+                    
                     document.getElementById('call-status').style.display = 'none';
+                    
+                    // Answer the call with your stream
                     this.currentCall.answer(stream);
-                    this.currentCall.on('stream', remoteStream => { document.getElementById('call-remote-video').srcObject = remoteStream; });
+                    
+                    // Receive their stream
+                    this.currentCall.on('stream', remoteStream => { 
+                        const remoteVid = document.getElementById('call-remote-video');
+                        remoteVid.srcObject = remoteStream;
+                        remoteVid.play().catch(e => console.log("Remote video play error:", e));
+                    });
+                    
                     this.currentCall.on('close', () => this.endCall(true));
                 });
             },
-            rejectCall() { document.getElementById('incoming-call').style.display = 'none'; if (this.currentCall) this.currentCall.close(); this.currentCall = null; },
+            rejectCall() { 
+                document.getElementById('incoming-call').style.display = 'none'; 
+                if (this.currentCall) this.currentCall.close(); 
+                this.currentCall = null; 
+            },
             endCall(fromRemote = false) {
                 if (this.currentCall && !fromRemote) this.currentCall.close();
                 this.currentCall = null;
                 document.getElementById('call-overlay').style.display = 'none';
+                
+                // Turn off the camera indicator light
                 const localVideo = document.getElementById('call-local-video');
-                if (localVideo.srcObject) localVideo.srcObject.getTracks().forEach(t => t.stop());
+                if (localVideo.srcObject) {
+                    localVideo.srcObject.getTracks().forEach(t => t.stop());
+                    localVideo.srcObject = null;
+                }
+                
                 document.getElementById('call-status').style.display = 'block';
                 document.getElementById('call-status').innerText = 'Call Ended';
             },
@@ -1384,6 +1448,10 @@
                 for (let id in this.activeConnections) { const conn = this.activeConnections[id]; if (conn && conn.open) conn.send(data); }
             }
         },
+```
+
+Once you drop this into `VortexV15.html`, it will perfectly integrate with the rest of your robust V15 systems! Push it live and try connecting again.
+
         admin: {
             viewUsers() {
                 const list = document.getElementById('admin-user-list');
