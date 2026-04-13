@@ -1,3 +1,11 @@
+Here is the completely updated, final code with the mobile chat bar fix applied, alongside all the amazing features we've built so far (Vortex AI, iTunes Soundtracks, Quienten G Owner Admin, Double-Tap to Like, etc.). 
+
+The chat bar is now permanently locked to the bottom of the screen, the send button will never shrink or squish when the keyboard opens, and the messages will scroll perfectly above it!
+
+### Instructions:
+Copy and paste this entire block, replacing all the code in your `VORTEX(ByeAurav9).html` file.
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -136,11 +144,22 @@
         
         #chat-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-base); z-index: 200; display: none; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); }
         #chat-overlay.active { display: flex; transform: translateX(0); }
-        .chat-history { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #0a0a0a; position: relative; }
+        
+        /* Updated Chat History for bottom padding */
+        .chat-history { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #0a0a0a; position: relative; padding-bottom: 90px; }
+        
         .msg-wrapper { display: flex; flex-direction: column; width: 100%; margin-bottom: 5px; }
         .msg-bubble { position: relative; max-width: 75%; padding: 12px 18px; border-radius: 20px; font-size: 0.95rem; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .msg-bubble.sent { align-self: flex-end; background: linear-gradient(135deg, var(--c-brand), var(--c-brand-alt)); color: #000; border-bottom-right-radius: 4px; font-weight: 600; }
         .msg-bubble.received { align-self: flex-start; background: #2a2a2a; color: #fff; border-bottom-left-radius: 4px; }
+        
+        .chat-input-bar { padding: 15px; border-top: 1px solid var(--c-border); display: flex; gap: 10px; align-items: center; background: var(--bg-base); padding-bottom: calc(15px + env(safe-area-inset-bottom)); position: relative; }
+        .chat-input-bar input { flex: 1; background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 14px 20px; border-radius: 25px; outline: none; font-size: 0.95rem; transition: 0.3s; }
+        .chat-input-bar input:focus { border-color: var(--c-brand); background: #222; }
+        
+        /* Updated Send Button to never shrink */
+        .btn-send { background: linear-gradient(135deg, var(--c-brand), var(--c-brand-alt)); color: #000; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,242,254,0.3); transition: 0.2s; flex-shrink: 0; }
+        .btn-send:active { transform: scale(0.9); }
         
         #typing-indicator { position: absolute; bottom: 100%; left: 15px; padding-bottom: 5px; color: var(--c-brand); font-size: 0.75rem; font-weight: 600; font-style: italic; display: none; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
@@ -240,7 +259,7 @@
                 </div>
             </div>
             
-            <div class="ai-input-area" style="position:absolute; bottom:0; left:0; width:100%; border-radius:0; margin:0;">
+            <div class="ai-input-area" style="position:absolute; bottom:0; left:0; width:100%; border-radius:0; margin:0; box-sizing: border-box;">
                 <input type="text" id="ai-prompt" placeholder="Ask Vortex AI..." onkeypress="if(event.key === 'Enter') VORTEX.ai.ask()">
                 <button onclick="VORTEX.ai.ask()"><i class="fa-solid fa-paper-plane"></i></button>
             </div>
@@ -391,8 +410,10 @@
             </div>
             <i class="fas fa-video" style="cursor:pointer; color:var(--c-brand);" onclick="VORTEX.p2p.callUser()"></i>
         </div>
+        
         <div class="chat-history" id="chat-history"></div>
-        <div class="chat-input-bar">
+        
+        <div class="chat-input-bar" style="position: absolute; bottom: 0; left: 0; width: 100%; z-index: 100; box-sizing: border-box;">
             <div id="typing-indicator">User is typing...</div>
             <input type="text" id="chat-msg-input" placeholder="Type a message..." oninput="VORTEX.p2p.sendTyping()">
             <button class="btn-send" onclick="VORTEX.p2p.sendMessage()"><i class="fas fa-paper-plane"></i></button>
@@ -480,7 +501,6 @@
                 setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3500);
             },
             switchScreen(screenId, navElement = null) {
-                // Pause background music when leaving the feed
                 if (screenId !== 'feed' && VORTEX.feed.bgAudio) {
                     VORTEX.feed.bgAudio.pause();
                 }
@@ -977,8 +997,6 @@
                 document.getElementById('upload-preview').style.filter = f;
                 document.getElementById('upload-preview-img').style.filter = f;
             },
-            
-            // MUSIC LIBRARY FUNCTIONS
             openMusicLibrary() {
                 document.getElementById('music-modal').classList.add('active');
             },
@@ -994,7 +1012,6 @@
                     resDiv.innerHTML = '';
                     if(data.results.length === 0) { resDiv.innerHTML = '<div style="text-align:center; color:var(--c-muted); margin-top:20px;">No songs found. Try another search.</div>'; return; }
                     data.results.forEach(song => {
-                        // Securely escape names to prevent JS breaks
                         const safeName = song.trackName.replace(/'/g, "\\'").replace(/"/g, "&quot;");
                         const safeArtist = song.artistName.replace(/'/g, "\\'").replace(/"/g, "&quot;");
                         resDiv.innerHTML += `
@@ -1019,10 +1036,9 @@
                 document.getElementById('selected-music-display').style.display = 'flex';
                 document.getElementById('selected-music-name').innerText = this.currentAudioName;
                 
-                // Play a tiny preview
                 this.previewAudio.src = url;
                 this.previewAudio.play().catch(e=>{});
-                setTimeout(() => this.previewAudio.pause(), 3000); // 3 second preview then pause
+                setTimeout(() => this.previewAudio.pause(), 3000); 
             },
             removeMusic() {
                 this.currentAudioUrl = null;
@@ -1030,8 +1046,6 @@
                 document.getElementById('selected-music-display').style.display = 'none';
                 this.previewAudio.pause();
             },
-            // END MUSIC LIBRARY
-
             capture() {
                 if (this.currentMode === 'photo') {
                     const video = document.getElementById('live-video');
@@ -1101,7 +1115,7 @@
             cancelUpload() { 
                 document.getElementById('upload-flow').style.display = 'none'; 
                 this.tempMediaUrl = null; 
-                this.removeMusic(); // Clear selected music on cancel
+                this.removeMusic(); 
                 this.startCamera(); 
             },
             publishPost() {
