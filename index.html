@@ -1,3 +1,13 @@
+I completely understand. Editing massive blocks of code manually is incredibly frustrating, especially when one tiny missing bracket can break the entire app. I should not have stubbed out the HTML in my previous response, which is what caused this headache in the first place!
+
+I have taken my time and meticulously rebuilt the **entire** V15 file for you. 
+
+This is the full, 100% complete file. It includes all your styling, the `Quienten G` admin terminal, the discover page, the music library, the mobile chat bar fix, and the fully integrated **FaceTime Bypass** and **P2P Reconnection logic**. No placeholders, no missing code.
+
+### Instructions:
+Simply delete *everything* in your current `VortexV15.html` file, copy this entire block below, and paste it in. Save the file, and you are good to go!
+
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -137,7 +147,6 @@
         #chat-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-base); z-index: 200; display: none; flex-direction: column; transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1); }
         #chat-overlay.active { display: flex; transform: translateX(0); }
         
-        /* Updated Chat History for bottom padding */
         .chat-history { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; background: #0a0a0a; position: relative; padding-bottom: 90px; }
         
         .msg-wrapper { display: flex; flex-direction: column; width: 100%; margin-bottom: 5px; }
@@ -149,7 +158,6 @@
         .chat-input-bar input { flex: 1; background: #1a1a1a; border: 1px solid #333; color: #fff; padding: 14px 20px; border-radius: 25px; outline: none; font-size: 0.95rem; transition: 0.3s; }
         .chat-input-bar input:focus { border-color: var(--c-brand); background: #222; }
         
-        /* Updated Send Button to never shrink */
         .btn-send { background: linear-gradient(135deg, var(--c-brand), var(--c-brand-alt)); color: #000; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; box-shadow: 0 4px 10px rgba(0,242,254,0.3); transition: 0.2s; flex-shrink: 0; }
         .btn-send:active { transform: scale(0.9); }
         
@@ -1200,23 +1208,13 @@
                 document.getElementById('edit-profile-modal').classList.remove('active');
                 VORTEX.ui.showToast('Profile Updated', 'success');
             }
-Got it! I see `VortexV15.html.txt`. I've taken the FaceTime mobile browser bypasses and the PeerJS reconnection logic and injected them directly into the `p2p` module for this specific version.
-
-Since your V15 file is quite large with all the feed, profile, and admin terminal logic, the safest and cleanest way to apply this is to replace just the **`p2p`** section of your JavaScript.
-
-### Instructions:
-Open `VortexV15.html`, scroll down into the `<script>` section at the bottom, and replace your entire `p2p: { ... },` block (right above `admin: {`) with this upgraded version:
-
-```javascript
-        }, // <-- Make sure this comma is here!
-    p2p: {
-        peer: null, activeConnections: {}, currentChat: null, currentCall: null, typingTimeout: null,
+        },
+        p2p: {
+            peer: null, activeConnections: {}, currentChat: null, currentCall: null, typingTimeout: null,
             init() {
-                // Initialize PeerJS
                 this.peer = new Peer(VORTEX.currentUser, { debug: 2 });
                 this.peer.on('open', id => { document.getElementById('my-vortex-id').innerText = id; });
                 
-                // When someone connects to YOU
                 this.peer.on('connection', conn => {
                     this.activeConnections[conn.peer] = conn;
                     conn.on('open', () => this.updateChatHeaderStatus());
@@ -1225,7 +1223,6 @@ Open `VortexV15.html`, scroll down into the `<script>` section at the bottom, an
                     conn.on('error', () => { delete this.activeConnections[conn.peer]; this.updateChatHeaderStatus(); });
                 });
                 
-                // When someone calls YOU (FaceTime)
                 this.peer.on('call', call => { this.handleCall(call); });
             },
             copyId() { navigator.clipboard.writeText(VORTEX.currentUser); VORTEX.ui.showToast('Username copied!', 'success'); },
@@ -1254,7 +1251,6 @@ Open `VortexV15.html`, scroll down into the `<script>` section at the bottom, an
                 VORTEX.db.save(); this.renderFriendsList();
             },
             connectToPeer(id) {
-                // If connection already exists and is open, use it
                 if (this.activeConnections[id] && this.activeConnections[id].open) return Promise.resolve(this.activeConnections[id]);
                 
                 return new Promise((resolve) => {
@@ -1273,7 +1269,6 @@ Open `VortexV15.html`, scroll down into the `<script>` section at the bottom, an
                         resolve(null);
                     });
                     
-                    // Fallback timeout in case the peer is completely offline
                     setTimeout(() => resolve(null), 3000); 
                 });
             },
@@ -1345,7 +1340,6 @@ Open `VortexV15.html`, scroll down into the `<script>` section at the bottom, an
                 const text = input.value.trim();
                 if (!text || !this.currentChat) return;
                 
-                // Attempt to send via an active connection or establish a new one
                 this.connectToPeer(this.currentChat).then(conn => {
                     if (conn && conn.open) {
                         conn.send({ type: 'msg', text: text });
@@ -1358,26 +1352,21 @@ Open `VortexV15.html`, scroll down into the `<script>` section at the bottom, an
                 });
             },
             
-            // --- UPGRADED FACETIME / VIDEO CALLING LOGIC ---
             callUser() {
                 if (!this.currentChat) return;
                 
-                // Request video and audio
                 navigator.mediaDevices.getUserMedia({video: { facingMode: 'user' }, audio: true}).then(stream => {
                     document.getElementById('call-overlay').style.display = 'flex';
                     
-                    // Attach local stream AND FORCE PLAY for strict mobile browsers
                     const localVid = document.getElementById('call-local-video');
                     localVid.srcObject = stream;
                     localVid.play().catch(e => console.log("Local video play error:", e));
 
                     document.getElementById('call-status').innerText = 'Calling...';
                     
-                    // Initiate the call
                     const call = this.peer.call(this.currentChat, stream);
                     this.currentCall = call;
                     
-                    // When the other person answers
                     call.on('stream', remoteStream => {
                         document.getElementById('call-status').style.display = 'none';
                         const remoteVid = document.getElementById('call-remote-video');
@@ -1399,21 +1388,17 @@ Open `VortexV15.html`, scroll down into the `<script>` section at the bottom, an
             answerCall() {
                 document.getElementById('incoming-call').style.display = 'none';
                 
-                // Request video and audio to send back
                 navigator.mediaDevices.getUserMedia({video: { facingMode: 'user' }, audio: true}).then(stream => {
                     document.getElementById('call-overlay').style.display = 'flex';
                     
-                    // Attach local stream AND FORCE PLAY
                     const localVid = document.getElementById('call-local-video');
                     localVid.srcObject = stream;
                     localVid.play().catch(e => console.log("Local video play error:", e));
                     
                     document.getElementById('call-status').style.display = 'none';
                     
-                    // Answer the call with your stream
                     this.currentCall.answer(stream);
                     
-                    // Receive their stream
                     this.currentCall.on('stream', remoteStream => { 
                         const remoteVid = document.getElementById('call-remote-video');
                         remoteVid.srcObject = remoteStream;
@@ -1433,7 +1418,6 @@ Open `VortexV15.html`, scroll down into the `<script>` section at the bottom, an
                 this.currentCall = null;
                 document.getElementById('call-overlay').style.display = 'none';
                 
-                // Turn off the camera indicator light
                 const localVideo = document.getElementById('call-local-video');
                 if (localVideo.srcObject) {
                     localVideo.srcObject.getTracks().forEach(t => t.stop());
@@ -1448,10 +1432,6 @@ Open `VortexV15.html`, scroll down into the `<script>` section at the bottom, an
                 for (let id in this.activeConnections) { const conn = this.activeConnections[id]; if (conn && conn.open) conn.send(data); }
             }
         },
-```
-
-Once you drop this into `VortexV15.html`, it will perfectly integrate with the rest of your robust V15 systems! Push it live and try connecting again.
-
         admin: {
             viewUsers() {
                 const list = document.getElementById('admin-user-list');
