@@ -1288,12 +1288,17 @@
                 }
                 
                 if (data.type === 'msg') {
+                    const myU = VORTEX.db.users[VORTEX.currentUser];
+                    if (!myU.messages) myU.messages = {};
+                    if (!myU.messages[peerId]) myU.messages[peerId] = [];
+                    myU.messages[peerId].push({ type: 'received', text: data.text, time: Date.now() });
+                    VORTEX.db.save();
+
                     if (this.currentChat === peerId && document.getElementById('chat-overlay').classList.contains('active')) {
                         document.getElementById('typing-indicator').style.display = 'none';
                         document.getElementById('chat-history').innerHTML += `<div class="msg-wrapper"><div class="msg-bubble received">${data.text}</div></div>`;
                         document.getElementById('chat-history').scrollTop = document.getElementById('chat-history').scrollHeight;
                     } else { 
-                        const myU = VORTEX.db.users[VORTEX.currentUser];
                         if (myU.notifications) {
                             VORTEX.ui.showToast(`<b>${u.name}</b> sent a message: <br><span style="color:#aaa; font-size:0.8rem;">${data.text}</span>`, 'message', u.avatar, () => VORTEX.p2p.openChat(peerId)); 
                         }
@@ -1315,8 +1320,21 @@
                 document.getElementById('chat-header-name').innerText = fData.name;
                 document.getElementById('chat-header-status').innerText = "🟠 Connecting...";
                 document.getElementById('chat-header-status').style.color = "var(--c-warning)";
-                document.getElementById('chat-history').innerHTML = `<div style="text-align:center; color:var(--c-muted); padding:20px; font-size:0.8rem;">Secure Channel initialized with ${fData.name}</div>`;
+                
+                let historyHtml = `<div style="text-align:center; color:var(--c-muted); padding:20px; font-size:0.8rem;">Secure Channel initialized with ${fData.name}</div>`;
+                const myU = VORTEX.db.users[VORTEX.currentUser];
+                
+                if (myU && myU.messages && myU.messages[fId]) {
+                    myU.messages[fId].forEach(msg => {
+                        historyHtml += `<div class="msg-wrapper"><div class="msg-bubble ${msg.type}">${msg.text}</div></div>`;
+                    });
+                }
+                
+                const chatHistory = document.getElementById('chat-history');
+                chatHistory.innerHTML = historyHtml;
                 document.getElementById('chat-overlay').classList.add('active');
+                
+                setTimeout(() => chatHistory.scrollTop = chatHistory.scrollHeight, 50);
                 
                 this.connectToPeer(fId);
             },
@@ -1333,6 +1351,13 @@
                 this.connectToPeer(this.currentChat).then(conn => {
                     if (conn && conn.open) {
                         conn.send({ type: 'msg', text: text });
+                        
+                        const myU = VORTEX.db.users[VORTEX.currentUser];
+                        if (!myU.messages) myU.messages = {};
+                        if (!myU.messages[this.currentChat]) myU.messages[this.currentChat] = [];
+                        myU.messages[this.currentChat].push({ type: 'sent', text: text, time: Date.now() });
+                        VORTEX.db.save();
+
                         document.getElementById('chat-history').innerHTML += `<div class="msg-wrapper"><div class="msg-bubble sent">${text}</div></div>`;
                         document.getElementById('chat-history').scrollTop = document.getElementById('chat-history').scrollHeight;
                         input.value = '';
@@ -1341,7 +1366,6 @@
                     }
                 });
             },
-            
             callUser() {
                 if (!this.currentChat) return;
                 
