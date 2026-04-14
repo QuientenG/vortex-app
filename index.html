@@ -86,6 +86,10 @@
         .sound-btn span { font-size: 0.8rem; font-weight: 700; color: #fff; text-align: center; }
         .sound-btn:hover i { transform: scale(1.15) translateY(-5px); color: var(--c-text); }
         
+        /* Delete Custom Sound Button */
+        .delete-sound { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; color: var(--c-accent); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; z-index: 10; background: rgba(0,0,0,0.6); border-radius: 50%; opacity: 0; transition: opacity 0.2s; border: 1px solid var(--c-accent); }
+        .sound-btn:hover .delete-sound { opacity: 1; }
+        
         .ai-msg { display: flex; gap: 10px; max-width: 85%; }
         .ai-msg.user { align-self: flex-end; flex-direction: row-reverse; }
         .ai-msg.bot { align-self: flex-start; }
@@ -264,7 +268,15 @@
         </div>
 
         <div id="discover-soundboard" class="discover-view" style="display: none; flex:1; overflow-y:auto; padding: 15px; padding-bottom: 80px;">
-            <h3 style="margin-bottom: 15px; text-align: center; color: var(--c-muted);">VORTEX Sound Board</h3>
+            
+            <div style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 16px; margin-bottom: 20px; border: 1px solid var(--c-border);">
+                <h4 style="margin-bottom: 15px; font-size: 0.9rem; color: var(--c-brand); display:flex; align-items:center; gap:8px;"><i class="fas fa-link"></i> Add Web Sound</h4>
+                <input type="text" id="custom-sound-name" class="vortex-input" placeholder="Sound Name (e.g. Bruh)" style="padding: 12px; margin-bottom: 10px; font-size:0.9rem;">
+                <input type="text" id="custom-sound-url" class="vortex-input" placeholder="Direct Audio URL (.mp3, .wav)" style="padding: 12px; margin-bottom: 15px; font-size:0.9rem;">
+                <button class="vortex-btn" style="padding: 12px; font-size:0.85rem;" onclick="VORTEX.sounds.addCustomSound()"><i class="fas fa-plus"></i> Add to Soundboard</button>
+            </div>
+            
+            <h3 style="margin-bottom: 15px; text-align: center; color: var(--c-muted); font-size:0.9rem; letter-spacing:1px; text-transform:uppercase;">My Sound Board</h3>
             <div id="soundboard-grid" class="soundboard-grid">
                 </div>
         </div>
@@ -453,18 +465,21 @@
         db: {
             users: {},
             posts: [],
+            customSounds: [], // NEW array for user sounds
             async load() {
                 try {
                     const data = await localforage.getItem('vortex_data');
                     if (data) {
                         this.users = data.users || {};
                         this.posts = data.posts || [];
+                        this.customSounds = data.customSounds || [];
                     } else {
                         const old = localStorage.getItem('vortex_db');
                         if (old) {
                             const parsed = JSON.parse(old);
                             this.users = parsed.users || {};
                             this.posts = parsed.posts || [];
+                            this.customSounds = parsed.customSounds || [];
                             this.save();
                         }
                     }
@@ -472,7 +487,11 @@
             },
             async save() {
                 try {
-                    await localforage.setItem('vortex_data', { users: this.users, posts: this.posts });
+                    await localforage.setItem('vortex_data', { 
+                        users: this.users, 
+                        posts: this.posts,
+                        customSounds: this.customSounds 
+                    });
                 } catch (e) {
                     VORTEX.ui.showToast('Storage full! Clean up old posts.', 'error');
                 }
@@ -567,7 +586,7 @@
             }
         },
         
-        // --- NEW SOUNDBOARD SYSTEM ---
+        // --- NEW CUSTOM SOUNDBOARD SYSTEM ---
         sounds: {
             audioCache: {},
             list: [
@@ -586,13 +605,50 @@
                     this.audioCache[url] = new Audio(url);
                 }
                 const sound = this.audioCache[url];
-                sound.currentTime = 0; // Reset so rapid clicks work
-                sound.play().catch(e => console.log('Audio playback error:', e));
+                sound.currentTime = 0; 
+                sound.play().catch(e => {
+                    console.log('Audio playback error:', e);
+                    VORTEX.ui.showToast('Could not play sound. The URL might be invalid.', 'error');
+                });
+            },
+            addCustomSound() {
+                const name = document.getElementById('custom-sound-name').value.trim();
+                const url = document.getElementById('custom-sound-url').value.trim();
+                
+                if (!name || !url) return VORTEX.ui.showToast('Please enter both a name and a direct audio URL.', 'error');
+                if (!url.startsWith('http')) return VORTEX.ui.showToast('URL must start with http:// or https://', 'error');
+
+                VORTEX.db.customSounds = VORTEX.db.customSounds || [];
+                VORTEX.db.customSounds.push({
+                    id: 'custom_' + Date.now(),
+                    name: name,
+                    icon: 'fa-globe', 
+                    url: url
+                });
+                
+                VORTEX.db.save();
+                
+                document.getElementById('custom-sound-name').value = '';
+                document.getElementById('custom-sound-url').value = '';
+                
+                this.render();
+                VORTEX.ui.showToast('Custom sound added!', 'success');
+            },
+            deleteCustomSound(id, event) {
+                event.stopPropagation(); // Stop the sound from playing when clicking delete
+                if (confirm("Delete this custom sound?")) {
+                    VORTEX.db.customSounds = VORTEX.db.customSounds.filter(s => s.id !== id);
+                    VORTEX.db.save();
+                    this.render();
+                    VORTEX.ui.showToast('Sound removed.', 'success');
+                }
             },
             render() {
                 const container = document.getElementById('soundboard-grid');
                 if(!container) return;
                 let html = '';
+                
+                // 1. Render default sounds
                 this.list.forEach(s => {
                     html += `
                         <div class="sound-btn" onclick="VORTEX.sounds.play('${s.url}')">
@@ -601,6 +657,19 @@
                         </div>
                     `;
                 });
+                
+                // 2. Render user's custom sounds
+                const custom = VORTEX.db.customSounds || [];
+                custom.forEach(s => {
+                    html += `
+                        <div class="sound-btn" onclick="VORTEX.sounds.play('${s.url}')">
+                            <div class="delete-sound" onclick="VORTEX.sounds.deleteCustomSound('${s.id}', event)"><i class="fas fa-times"></i></div>
+                            <i class="fa-solid ${s.icon}" style="color: #ffb300; text-shadow: 0 2px 10px rgba(255,179,0,0.4);"></i>
+                            <span>${s.name}</span>
+                        </div>
+                    `;
+                });
+                
                 container.innerHTML = html;
             }
         },
