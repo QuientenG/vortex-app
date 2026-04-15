@@ -360,7 +360,7 @@
             <div class="settings-item" onclick="VORTEX.settings.togglePrivacy()"><i class="fas fa-key"></i> Account Privacy</div>
             <div class="settings-item" onclick="VORTEX.settings.toggleNotifications()"><i class="fas fa-bell"></i> Notifications</div>
             <div class="settings-item" onclick="VORTEX.settings.dataUsage()"><i class="fas fa-database"></i> Data Usage</div>
-            <div class="settings-item admin" id="admin-settings-btn" onclick="document.getElementById('admin-modal').classList.add('active')"><i class="fas fa-terminal"></i> Owner Terminal</div>
+            <div class="settings-item admin" id="admin-settings-btn" onclick="document.getElementById('admin-modal').classList.add('active'); VORTEX.admin.viewUsers();"><i class="fas fa-terminal"></i> Owner Terminal</div>
             <div class="settings-item danger" onclick="VORTEX.auth.logout()"><i class="fas fa-sign-out-alt"></i> Log Out</div>
         </div>
     </div>
@@ -390,14 +390,14 @@
         </div>
         <div style="padding: 20px; display:flex; flex-direction:column; gap:20px;">
             <div class="glass-panel" style="padding:20px; background:rgba(255,0,0,0.05); border-color:rgba(255,0,0,0.2);">
-                <h4 style="color:var(--admin-red); margin-bottom:10px;"><i class="fas fa-users"></i> App User Log</h4>
-                <button class="vortex-btn danger" style="padding:12px; font-size:0.8rem;" onclick="VORTEX.admin.viewUsers()">View Registered Users</button>
-                <div id="admin-user-list" style="margin-top:15px; font-size:0.85rem; color:#ccc; max-height:200px; overflow-y:auto;"></div>
+                <h4 style="color:var(--admin-red); margin-bottom:10px;"><i class="fas fa-users"></i> Live User Log</h4>
+                <div style="font-size:0.7rem; color:var(--c-muted); margin-bottom:10px;">Updates automatically in real-time.</div>
+                <div id="admin-user-list" style="font-size:0.85rem; color:#ccc; max-height:250px; overflow-y:auto; border:1px solid rgba(255,0,0,0.2); padding:10px; border-radius:10px; background:#000;"></div>
             </div>
             <div class="glass-panel" style="padding:20px; background:rgba(255,0,0,0.05); border-color:rgba(255,0,0,0.2);">
-                <h4 style="color:var(--admin-red); margin-bottom:10px;"><i class="fas fa-user-shield"></i> User Moderation</h4>
+                <h4 style="color:var(--admin-red); margin-bottom:10px;"><i class="fas fa-user-shield"></i> Manual Moderation</h4>
                 <input type="text" id="admin-ban-user" class="vortex-input" placeholder="Enter exact username...">
-                <button class="vortex-btn danger" onclick="VORTEX.admin.banAccount()">Ban Account & Purge Posts</button>
+                <button class="vortex-btn danger" onclick="VORTEX.admin.toggleBan()">Ban / Unban Account</button>
             </div>
             <div class="glass-panel" style="padding:20px; background:rgba(255,0,0,0.05); border-color:rgba(255,0,0,0.2);">
                 <h4 style="color:var(--admin-red); margin-bottom:10px;"><i class="fas fa-broadcast-tower"></i> System Broadcast</h4>
@@ -494,7 +494,7 @@
                         users: this.users, 
                         posts: this.posts,
                         customSounds: this.customSounds,
-                        bannedUsers: this.bannedUsers
+                        bannedUsers: this.bannedUsers || []
                     });
                 } catch (e) {
                     VORTEX.ui.showToast('Storage full! Clean up old posts.', 'error');
@@ -571,7 +571,8 @@
                     return;
                 }
                 const lowerQuery = query.toLowerCase();
-                const matched = VORTEX.db.posts.filter(p => p.desc && p.desc.toLowerCase().includes(lowerQuery));
+                // Filter out banned users from search
+                const matched = VORTEX.db.posts.filter(p => p.desc && p.desc.toLowerCase().includes(lowerQuery) && !(VORTEX.db.bannedUsers || []).includes(p.author));
                 let html = `<h3 style="margin-bottom: 15px;">Results for "${query}"</h3><div class="profile-grid">`;
                 matched.forEach(post => {
                     html += `<div class="grid-item" onclick="VORTEX.feed.openMediaViewer('${post.id}')">`;
@@ -609,7 +610,7 @@
                 sound.currentTime = 0; 
                 sound.play().catch(e => {
                     console.log('Audio playback error:', e);
-                    VORTEX.ui.showToast('Could not play sound. The URL might be invalid.', 'error');
+                    VORTEX.ui.showToast('Could not play sound. URL might be invalid or blocked.', 'error');
                 });
             },
             addCustomSound() {
@@ -793,10 +794,10 @@
                 if (localStorage.getItem('vortex_active_user')) {
                     VORTEX.currentUser = localStorage.getItem('vortex_active_user');
                     
-                    // --- NEW: Block if banned ---
+                    // Check if currently banned
                     if (VORTEX.db.bannedUsers && VORTEX.db.bannedUsers.includes(VORTEX.currentUser)) {
                         this.logout();
-                        alert("This account has been permanently banned from the VORTEX network.");
+                        alert("Your account has been permanently banned from the VORTEX network.");
                         return;
                     }
                     
@@ -816,9 +817,9 @@
                 const pass = document.getElementById('auth-password').value.trim();
                 if (!user || !pass) return VORTEX.ui.showToast("Fields cannot be empty", "error");
                 
-                // --- NEW: Check ban list on login ---
+                // Prevent login if on global ban list
                 if (VORTEX.db.bannedUsers && VORTEX.db.bannedUsers.includes(user)) {
-                    return VORTEX.ui.showToast("Account has been permanently banned.", "error");
+                    return VORTEX.ui.showToast("Account is currently banned from the network.", "error");
                 }
                 
                 if (user === 'Quienten G') {
@@ -873,6 +874,9 @@
                 container.innerHTML = '';
                 const myUser = VORTEX.db.users[VORTEX.currentUser];
                 let postsToRender = VORTEX.db.posts.slice().reverse();
+                
+                // FILTER OUT BANNED USERS GLOBALLY
+                postsToRender = postsToRender.filter(p => !(VORTEX.db.bannedUsers || []).includes(p.author));
                 
                 if (this.currentTab === 'following') {
                     postsToRender = postsToRender.filter(p => myUser.followedList.includes(p.author) || p.author === VORTEX.currentUser);
@@ -1293,19 +1297,26 @@
                 const followersCount = allUsers.filter(usr => usr.followedList && usr.followedList.includes(userId)).length;
                 document.getElementById('stat-followers').innerText = followersCount;
 
-                const userPosts = VORTEX.db.posts.filter(p => p.author === userId);
+                const userPosts = VORTEX.db.posts.filter(p => p.author === userId && !(VORTEX.db.bannedUsers || []).includes(p.author));
                 let totalLikes = 0; userPosts.forEach(p => totalLikes += (p.likes ? p.likes.length : 0));
                 document.getElementById('stat-likes').innerText = totalLikes;
                 
                 const grid = document.getElementById('profile-grid');
                 grid.innerHTML = '';
-                userPosts.reverse().forEach(post => {
-                    const el = document.createElement('div'); el.className = 'grid-item';
-                    el.onclick = () => VORTEX.feed.openMediaViewer(post.id);
-                    const transformCss = post.isMirrored ? 'transform: scaleX(-1);' : '';
-                    el.innerHTML = post.type === 'video' ? `<video src="${post.url}" style="${transformCss}" muted></video>` : `<img src="${post.url}" style="${transformCss}">`;
-                    grid.appendChild(el);
-                });
+                
+                const isBanned = VORTEX.db.bannedUsers && VORTEX.db.bannedUsers.includes(userId);
+                
+                if (isBanned && userId !== VORTEX.currentUser) {
+                    grid.innerHTML = `<div style="grid-column: span 3; text-align: center; color: var(--c-accent); padding: 40px 20px; font-weight: bold;"><i class="fas fa-ban" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>This account has been banned.</div>`;
+                } else {
+                    userPosts.reverse().forEach(post => {
+                        const el = document.createElement('div'); el.className = 'grid-item';
+                        el.onclick = () => VORTEX.feed.openMediaViewer(post.id);
+                        const transformCss = post.isMirrored ? 'transform: scaleX(-1);' : '';
+                        el.innerHTML = post.type === 'video' ? `<video src="${post.url}" style="${transformCss}" muted></video>` : `<img src="${post.url}" style="${transformCss}">`;
+                        grid.appendChild(el);
+                    });
+                }
 
                 const actionBtn = document.getElementById('profile-action-btn');
                 const settingsBtn = document.getElementById('profile-settings-btn');
@@ -1351,10 +1362,21 @@
                 
                 this.peer.on('connection', conn => {
                     this.activeConnections[conn.peer] = conn;
-                    conn.on('open', () => this.updateChatHeaderStatus());
+                    conn.on('open', () => {
+                        this.updateChatHeaderStatus();
+                        if(document.getElementById('admin-modal').classList.contains('active')) VORTEX.admin.viewUsers();
+                    });
                     conn.on('data', data => this.handleData(conn.peer, data));
-                    conn.on('close', () => { delete this.activeConnections[conn.peer]; this.updateChatHeaderStatus(); });
-                    conn.on('error', () => { delete this.activeConnections[conn.peer]; this.updateChatHeaderStatus(); });
+                    conn.on('close', () => { 
+                        delete this.activeConnections[conn.peer]; 
+                        this.updateChatHeaderStatus(); 
+                        if(document.getElementById('admin-modal').classList.contains('active')) VORTEX.admin.viewUsers();
+                    });
+                    conn.on('error', () => { 
+                        delete this.activeConnections[conn.peer]; 
+                        this.updateChatHeaderStatus(); 
+                        if(document.getElementById('admin-modal').classList.contains('active')) VORTEX.admin.viewUsers();
+                    });
                 });
                 
                 this.peer.on('call', call => { this.handleCall(call); });
@@ -1392,9 +1414,14 @@
                     conn.on('open', () => { 
                         this.activeConnections[id] = conn; 
                         conn.on('data', data => this.handleData(id, data)); 
-                        conn.on('close', () => { delete this.activeConnections[id]; this.updateChatHeaderStatus(); });
+                        conn.on('close', () => { 
+                            delete this.activeConnections[id]; 
+                            this.updateChatHeaderStatus(); 
+                            if(document.getElementById('admin-modal').classList.contains('active')) VORTEX.admin.viewUsers();
+                        });
                         this.renderFriendsList(); 
                         this.updateChatHeaderStatus();
+                        if(document.getElementById('admin-modal').classList.contains('active')) VORTEX.admin.viewUsers();
                         resolve(conn); 
                     });
                     conn.on('error', () => {
@@ -1449,7 +1476,6 @@
                     }
                 }
                 
-                // --- NEW P2P HANDLER: Kill Switch ---
                 if (data.type === 'kill_switch') {
                     VORTEX.auth.logout();
                     alert("Your account has been permanently banned from the VORTEX network by the Administrator.");
@@ -1462,7 +1488,6 @@
                     VORTEX.db.bannedUsers = data.bannedUsers || [];
                     VORTEX.db.save(); 
 
-                    // Check if newly banned
                     if (VORTEX.db.bannedUsers.includes(VORTEX.currentUser)) {
                         VORTEX.auth.logout();
                         alert("Your account has been permanently banned.");
@@ -1470,6 +1495,7 @@
                         return;
                     }
 
+                    if(document.getElementById('admin-modal').classList.contains('active')) VORTEX.admin.viewUsers();
                     if(document.getElementById('screen-feed').classList.contains('active')) VORTEX.feed.render(); 
                     if(document.getElementById('screen-profile').classList.contains('active')) VORTEX.profile.render(document.getElementById('prof-name').innerText === u.name ? peerId : VORTEX.currentUser);
                     if(document.getElementById('comments-modal').classList.contains('active') && VORTEX.feed.currentPostComments) { VORTEX.feed.openComments(VORTEX.feed.currentPostComments); }
@@ -1620,21 +1646,64 @@
                 const users = Object.values(VORTEX.db.users);
                 if (users.length === 0) return list.innerHTML = 'No users found.';
                 let html = '<ul style="list-style:none; padding:0; margin:0;">';
+                
                 users.forEach(u => {
-                    if (u.name === 'Quienten G') return; // Hide Owner from ban list
+                    if (u.name === 'Quienten G') return; 
+                    
+                    const isBanned = VORTEX.db.bannedUsers && VORTEX.db.bannedUsers.includes(u.name);
                     const postCount = VORTEX.db.posts.filter(p => p.author === u.name).length;
                     const isOnline = VORTEX.p2p.activeConnections[u.name] && VORTEX.p2p.activeConnections[u.name].open;
+                    
                     const statusColor = isOnline ? 'var(--c-success)' : 'var(--c-muted)';
+                    const nameStyle = isBanned ? 'text-decoration: line-through; color: var(--c-muted);' : 'color: #fff;';
+                    const btnStyle = isBanned ? 'background: var(--c-success); color: #000; border: none;' : 'background: rgba(255,8,68,0.1); color: var(--c-accent); border: 1px solid var(--c-accent);';
+                    const btnText = isBanned ? 'UNBAN' : 'BAN';
+
                     html += `<li style="padding:10px 0; border-bottom:1px solid rgba(255,0,0,0.2); display:flex; justify-content:space-between; align-items:center;">
                         <div style="display:flex; flex-direction:column;">
-                            <span style="font-weight:600; color:#fff;">@${u.name} <span style="font-size:0.6rem; color:${statusColor};">●</span></span>
+                            <span style="font-weight:600; ${nameStyle}">@${u.name} <span style="font-size:0.6rem; color:${statusColor};">●</span></span>
                             <span style="color:var(--admin-red); font-size:0.75rem;">${postCount} Posts</span>
                         </div>
-                        <button class="vortex-btn danger" style="width:auto; padding:6px 12px; font-size:0.7rem;" onclick="VORTEX.admin.banAccount('${u.name}')">BAN</button>
+                        <button class="vortex-btn" style="width:auto; padding:6px 12px; font-size:0.7rem; box-shadow:none; ${btnStyle}" onclick="VORTEX.admin.toggleBan('${u.name}')">${btnText}</button>
                     </li>`;
                 });
+                
                 html += '</ul>';
                 list.innerHTML = html;
+            },
+            toggleBan(targetUser = null) {
+                const username = targetUser || document.getElementById('admin-ban-user').value.trim();
+                if (!username || !VORTEX.db.users[username]) {
+                    return VORTEX.ui.showToast('User not found in database.', 'error');
+                }
+                
+                VORTEX.db.bannedUsers = VORTEX.db.bannedUsers || [];
+                const isBanned = VORTEX.db.bannedUsers.includes(username);
+
+                if (isBanned) {
+                    if (confirm(`Unban @${username} and restore their posts globally?`)) {
+                        VORTEX.db.bannedUsers = VORTEX.db.bannedUsers.filter(u => u !== username);
+                        VORTEX.db.save();
+                        VORTEX.p2p.broadcastFeedSync();
+                        VORTEX.ui.showToast(`User @${username} has been UNBANNED.`, 'success');
+                    }
+                } else {
+                    if (confirm(`Ban @${username} and hide ALL their posts globally?`)) {
+                        VORTEX.db.bannedUsers.push(username);
+                        VORTEX.db.save();
+
+                        if (VORTEX.p2p.activeConnections[username] && VORTEX.p2p.activeConnections[username].open) {
+                            VORTEX.p2p.activeConnections[username].send({ type: 'kill_switch' });
+                        }
+
+                        VORTEX.p2p.broadcastFeedSync();
+                        VORTEX.ui.showToast(`User @${username} has been BANNED.`, 'system');
+                    }
+                }
+                
+                document.getElementById('admin-ban-user').value = '';
+                this.viewUsers(); 
+                if(document.getElementById('screen-feed').classList.contains('active')) VORTEX.feed.render();
             },
             broadcast() {
                 const msg = document.getElementById('admin-broadcast-msg').value; if(!msg) return; let count = 0;
@@ -1645,38 +1714,6 @@
                 if(confirm("WARNING: This will permanently delete ALL videos, photos, and comments from ALL users in the database. Proceed?")) {
                     VORTEX.db.posts = []; VORTEX.db.save(); VORTEX.p2p.broadcastFeedSync();
                     VORTEX.ui.showToast("Database fully purged.", "system"); VORTEX.ui.switchScreen('feed'); document.getElementById('admin-modal').classList.remove('active');
-                }
-            },
-            banAccount(targetUser = null) {
-                const username = targetUser || document.getElementById('admin-ban-user').value.trim();
-                if (!username || !VORTEX.db.users[username]) {
-                    return VORTEX.ui.showToast('User not found in database.', 'error');
-                }
-                if (confirm(`WARNING: This will permanently ban @${username} and erase ALL their posts globally. Proceed?`)) {
-                    
-                    // 1. Add to global ban list
-                    VORTEX.db.bannedUsers = VORTEX.db.bannedUsers || [];
-                    if (!VORTEX.db.bannedUsers.includes(username)) {
-                        VORTEX.db.bannedUsers.push(username);
-                    }
-
-                    // 2. Erase from DB
-                    delete VORTEX.db.users[username];
-                    VORTEX.db.posts = VORTEX.db.posts.filter(p => p.author !== username);
-                    VORTEX.db.save();
-
-                    // 3. Shoot Kill Switch if they are currently connected
-                    if (VORTEX.p2p.activeConnections[username] && VORTEX.p2p.activeConnections[username].open) {
-                        VORTEX.p2p.activeConnections[username].send({ type: 'kill_switch' });
-                    }
-
-                    // 4. Force sync so other connected peers kick them out
-                    VORTEX.p2p.broadcastFeedSync();
-                    
-                    VORTEX.ui.showToast(`User @${username} has been permanently banned.`, 'system');
-                    document.getElementById('admin-ban-user').value = '';
-                    this.viewUsers(); // Refresh the list
-                    VORTEX.ui.switchScreen('feed');
                 }
             }
         }
@@ -1715,6 +1752,14 @@
                 }
             }
         }, { passive: false });
+
+        // Background Engine to silently keep the Live User Log updated in real time
+        setInterval(() => {
+            const adminModal = document.getElementById('admin-modal');
+            if (adminModal && adminModal.classList.contains('active')) {
+                VORTEX.admin.viewUsers();
+            }
+        }, 2000);
     };
 </script>
 </body>
