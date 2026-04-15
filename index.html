@@ -90,6 +90,7 @@
         .sound-btn span { font-size: 0.8rem; font-weight: 700; color: #fff; text-align: center; }
         .sound-btn:hover i { transform: scale(1.15) translateY(-5px); color: var(--c-text); }
         
+        /* Delete Custom Sound Button */
         .delete-sound { position: absolute; top: 5px; right: 5px; width: 24px; height: 24px; color: var(--c-accent); font-size: 0.8rem; display: flex; align-items: center; justify-content: center; z-index: 10; background: rgba(0,0,0,0.6); border-radius: 50%; opacity: 0; transition: opacity 0.2s; border: 1px solid var(--c-accent); }
         .sound-btn:hover .delete-sound { opacity: 1; }
         
@@ -283,7 +284,11 @@
                 <button class="vortex-btn" style="padding: 12px; font-size:0.85rem;" onclick="VORTEX.sounds.addCustomSound()"><i class="fas fa-plus"></i> Add to Soundboard</button>
             </div>
             
-            <h3 style="margin-bottom: 15px; text-align: center; color: var(--c-muted); font-size:0.9rem; letter-spacing:1px; text-transform:uppercase;">My Custom Sounds</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0; color: var(--c-muted); font-size:0.9rem; letter-spacing:1px; text-transform:uppercase;">My Custom Sounds</h3>
+                <button class="vortex-btn danger" style="width: auto; padding: 6px 12px; font-size: 0.75rem; box-shadow: none;" onclick="VORTEX.sounds.stop()"><i class="fas fa-stop"></i> Stop</button>
+            </div>
+
             <div id="soundboard-grid" class="soundboard-grid">
                 </div>
         </div>
@@ -602,9 +607,10 @@
             }
         },
         
-        // --- UPGRADED YOUTUBE SOUNDBOARD ENGINE ---
+        // --- FULLY POLISHED YOUTUBE SOUNDBOARD ENGINE ---
         sounds: {
             list: [], // Default sounds strictly removed
+            currentPlaying: null, // Tracks what is currently playing
             extractYTId(url) {
                 const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
                 const match = url.match(regExp);
@@ -612,7 +618,25 @@
             },
             play(ytId) {
                 const container = document.getElementById('yt-player-container');
+                
+                // If clicking the same sound that's already playing, STOP it!
+                if (this.currentPlaying === ytId) {
+                    this.stop();
+                    return;
+                }
+                
+                // Otherwise, start playing the new sound
+                this.currentPlaying = ytId;
                 container.innerHTML = `<iframe width="1" height="1" src="https://www.youtube.com/embed/${ytId}?autoplay=1&enablejsapi=1" allow="autoplay" style="display:none;"></iframe>`;
+                VORTEX.ui.showToast('Playing sound... Tap again to stop.', 'system');
+            },
+            stop() {
+                const container = document.getElementById('yt-player-container');
+                container.innerHTML = '';
+                if (this.currentPlaying) {
+                    this.currentPlaying = null;
+                    VORTEX.ui.showToast('Playback stopped.', 'system');
+                }
             },
             addCustomSound() {
                 const name = document.getElementById('custom-sound-name').value.trim();
@@ -644,6 +668,10 @@
                 if (confirm("Delete this sound?")) {
                     VORTEX.db.customSounds = VORTEX.db.customSounds.filter(s => s.id !== id);
                     VORTEX.db.save();
+                    
+                    // If the sound we just deleted was playing, stop it.
+                    if (this.currentPlaying === id) this.stop();
+                    
                     this.render();
                     VORTEX.ui.showToast('Sound removed.', 'success');
                 }
@@ -747,8 +775,6 @@
                 return "That's an excellent question! Because I am currently running in a secure, offline mode directly on your device, I can primarily answer questions regarding how to use the VORTEX app, managing your storage, adding friends, or clearing your cache.";
             }
         },
-        
-        // --- NEW CUSTOM THEME ENGINE ---
         settings: {
             cycleTheme() {
                 const colors = ['#00f2fe', '#ff0844', '#00e676', '#b000ff', '#ffb300'];
@@ -826,7 +852,7 @@
                     
                     document.getElementById('auth-overlay').style.display = 'none';
                     this.checkOwnerStatus();
-                    VORTEX.settings.applyTheme(); // Apply chosen theme
+                    VORTEX.settings.applyTheme(); 
                     VORTEX.p2p.init();
                     VORTEX.feed.render();
                 }
@@ -899,7 +925,6 @@
                 const myUser = VORTEX.db.users[VORTEX.currentUser];
                 let postsToRender = VORTEX.db.posts.slice().reverse();
                 
-                // FILTER OUT BANNED USERS GLOBALLY
                 postsToRender = postsToRender.filter(p => !(VORTEX.db.bannedUsers || []).includes(p.author));
                 
                 if (this.currentTab === 'following') {
@@ -939,7 +964,6 @@
                     
                     const mediaEl = el.querySelector('.video-player');
                     
-                    // --- NEW DOUBLE TAP HEART ANIMATION ---
                     mediaEl.addEventListener('dblclick', (e) => {
                         const heartBtn = el.querySelector('.fa-heart').parentElement;
                         if (!heartBtn.classList.contains('liked')) {
@@ -1327,7 +1351,6 @@
                 document.getElementById('prof-handle').innerText = u.handle;
                 document.getElementById('prof-img').src = u.avatar;
                 
-                // NEW: Render Bio
                 const bioEl = document.getElementById('prof-bio');
                 if (u.bio && u.bio.trim() !== '') {
                     bioEl.innerText = u.bio;
@@ -1394,7 +1417,7 @@
                 const u = VORTEX.db.users[VORTEX.currentUser];
                 u.name = document.getElementById('edit-prof-name').value;
                 u.avatar = document.getElementById('edit-prof-img').src;
-                u.bio = document.getElementById('edit-prof-bio').value.trim(); // Save bio
+                u.bio = document.getElementById('edit-prof-bio').value.trim(); 
                 VORTEX.db.save(); VORTEX.p2p.broadcastFeedSync();
                 this.render();
                 document.getElementById('edit-profile-modal').classList.remove('active');
